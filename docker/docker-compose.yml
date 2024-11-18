@@ -1,0 +1,35 @@
+version: '3.2'
+
+# docker compose -p mario-kart-agent up -d --scale worker=2
+# docker compose -p mario-kart-agent down
+
+services:
+  param_svr:
+    image: "${IMAGE_SPEC}"
+    entrypoint: /bin/bash ./utils/paramsvr.sh
+    tty: true
+    ports:
+     - "12345:12345"
+    volumes:
+     - type: volume
+       source: mklogs
+       target: /tmp/marioKartLogs
+    depends_on:
+     - worker
+
+  worker:
+    image: "${IMAGE_SPEC}"
+    entrypoint: /bin/bash ./utils/worker.sh
+    tty: true
+    ports:
+     - "5900"
+    volumes:
+     - type: bind
+       source: "${LOCAL_ROM_PATH}" # Since ROMs are not included in the image, bind mount a local path
+       target: /src/gym-mupen64plus/gym_mupen64plus/ROMs
+     - type: volume
+       source: mklogs
+       target: /tmp/marioKartLogs
+
+volumes:
+  mklogs:
