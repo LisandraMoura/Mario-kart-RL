@@ -7,6 +7,7 @@ import logging
 import sys, signal
 import time
 import os, socket
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.a3c import A3C
 from envs import create_env
 import distutils.version

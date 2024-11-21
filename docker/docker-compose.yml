@@ -14,6 +14,7 @@ services:
      - type: volume
        source: mklogs
        target: /tmp/marioKartLogs
+     - ../scripts/:/src/universe-starter-agent/scripts
     depends_on:
      - worker
 
@@ -30,6 +31,7 @@ services:
      - type: volume
        source: mklogs
        target: /tmp/marioKartLogs
+     - ../scripts/:/src/universe-starter-agent/scripts
 
 volumes:
   mklogs:
