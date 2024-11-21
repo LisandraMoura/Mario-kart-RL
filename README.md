@@ -53,3 +53,9 @@ Forked/branched from the [universe-starter-agent](https://github.com/openai/univ
     ./utils/novnc_proxy --vnc localhost:32775
     ```
     - Replace ```32775``` with the actual port exposed by your Docker container. This will open a web interface where you can visually observe the agent playing Mario Kart 64.
+
+## Checkpoints
+
+1. Check for the location of your logs using `docker volume ls`, you should see a volume named `mario-kart-agent_mklogs`
+2. Run `docker volume inspect mario-kart-agent_mklogs` and locate the folder it is in
+- If you want to start from scratch, just delete the volume. The code should automatically use the latest weights in the volume to resume training when you use docker compose up
