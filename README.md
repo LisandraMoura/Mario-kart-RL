@@ -9,7 +9,7 @@ Forked/branched from the [universe-starter-agent](https://github.com/openai/univ
 # Training a Reinforcement Learning Agent to Play Mario Kart 64
 
 ## Setup
-1. [Clone the Emulator Repository](https://github.com/bzier/gym-mupen64plus)
+1. [Clone the Emulator Repository](https://github.com/mendesLet/gym-mupen64plus)
 2. Build the Emulator Docker Image
 
 3. Clone this repository
