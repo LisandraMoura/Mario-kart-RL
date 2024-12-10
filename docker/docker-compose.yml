@@ -14,7 +14,9 @@ services:
      - type: volume
        source: mklogs
        target: /tmp/marioKartLogs
-     - ../scripts/:/src/universe-starter-agent/scripts
+     - type: bind
+       source: "${PWD}" # Add current working directory
+       target: /src/universe-starter-agent
     depends_on:
      - worker
 
@@ -31,7 +33,9 @@ services:
      - type: volume
        source: mklogs
        target: /tmp/marioKartLogs
-     - ../scripts/:/src/universe-starter-agent/scripts
+     - type: bind
+       source: "${PWD}" # Add current working directory
+       target: /src/universe-starter-agent
 
 volumes:
   mklogs:
