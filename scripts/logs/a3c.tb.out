@@ -1,0 +1,2 @@
+E1211 22:13:15.181360 140507614955264 program.py:228] TensorBoard could not bind to port 12345, it was already in use
+ERROR: TensorBoard could not bind to port 12345, it was already in use
