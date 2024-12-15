@@ -44,20 +44,36 @@ def categorical_sample(logits, d):
     value = tf.squeeze(tf.multinomial(logits - tf.reduce_max(logits, [1], keep_dims=True), 1), [1])
     return tf.one_hot(value, d)
 
-class LSTMPolicy(object):
+class LSTMPolicyWithAttention(object):
     def __init__(self, ob_space, ac_space):
         self.x = x = tf.placeholder(tf.float32, [None] + list(ob_space))
 
+        # Feature extraction with convolutional layers
         for i in range(4):
             x = tf.nn.elu(conv2d(x, 32, "l{}".format(i + 1), [3, 3], [2, 2]))
-        # introduce a "fake" batch dimension of 1 after flatten so that we can do LSTM over time dim
-        x = tf.expand_dims(flatten(x), [0])
+        x = flatten(x)  # Flatten to prepare for attention
 
+        # Attention mechanism
+        with tf.variable_scope("attention"):
+            hidden_size = 256
+            attention_w = tf.get_variable("attention_w", [x.get_shape()[1], hidden_size],
+                                          initializer=tf.contrib.layers.xavier_initializer())
+            attention_u = tf.get_variable("attention_u", [hidden_size, 1],
+                                          initializer=tf.contrib.layers.xavier_initializer())
+            attention_b = tf.get_variable("attention_b", [hidden_size],
+                                          initializer=tf.constant_initializer(0.0))
+
+            # Compute attention scores
+            attention_hidden = tf.nn.tanh(tf.matmul(x, attention_w) + attention_b)
+            attention_logits = tf.matmul(attention_hidden, attention_u)
+            attention_weights = tf.nn.softmax(attention_logits, axis=1)
+
+            # Apply attention weights
+            x = tf.reduce_sum(x * attention_weights, axis=1, keepdims=True)
+
+        # LSTM layer
         size = 256
-        if use_tf100_api:
-            lstm = rnn.BasicLSTMCell(size, state_is_tuple=True)
-        else:
-            lstm = rnn.rnn_cell.BasicLSTMCell(size, state_is_tuple=True)
+        lstm = tf.contrib.rnn.BasicLSTMCell(size, state_is_tuple=True)
         self.state_size = lstm.state_size
         step_size = tf.shape(self.x)[:1]
 
@@ -68,12 +84,9 @@ class LSTMPolicy(object):
         h_in = tf.placeholder(tf.float32, [1, lstm.state_size.h])
         self.state_in = [c_in, h_in]
 
-        if use_tf100_api:
-            state_in = rnn.LSTMStateTuple(c_in, h_in)
-        else:
-            state_in = rnn.rnn_cell.LSTMStateTuple(c_in, h_in)
+        state_in = tf.contrib.rnn.LSTMStateTuple(c_in, h_in)
         lstm_outputs, lstm_state = tf.nn.dynamic_rnn(
-            lstm, x, initial_state=state_in, sequence_length=step_size,
+            lstm, tf.expand_dims(x, [0]), initial_state=state_in, sequence_length=step_size,
             time_major=False)
         lstm_c, lstm_h = lstm_state
         x = tf.reshape(lstm_outputs, [-1, size])
