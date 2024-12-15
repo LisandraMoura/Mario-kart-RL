@@ -8,7 +8,7 @@ import sys, signal
 import time
 import os, socket
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models.a3c import A3C
+from models.a3cFeedForward import FeedForwardPolicy
 from envs import create_env
 import distutils.version
 use_tf12_api = distutils.version.LooseVersion(tf.VERSION) >= distutils.version.LooseVersion('0.12.0')
@@ -25,7 +25,7 @@ class FastSaver(tf.train.Saver):
 
 def run(args, server, task):
     env = create_env(args.env_id, client_id=str(task), remotes=args.remotes)
-    trainer = A3C(env, task, args.visualise)
+    trainer = FeedForwardPolicy(env, task, args.visualise)
 
     # Variable names that start with "local" are not saved in checkpoints.
     if use_tf12_api:
