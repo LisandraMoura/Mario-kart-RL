@@ -19,14 +19,8 @@ def conv2d(x, num_filters, name, filter_size=(3, 3), stride=(1, 1), pad="SAME", 
         stride_shape = [1, stride[0], stride[1], 1]
         filter_shape = [filter_size[0], filter_size[1], int(x.get_shape()[3]), num_filters]
 
-        # there are "num input feature maps * filter height * filter width"
-        # inputs to each hidden unit
         fan_in = np.prod(filter_shape[:3])
-        # each unit in the lower layer receives a gradient from:
-        # "num output feature maps * filter height * filter width" /
-        #   pooling size
         fan_out = np.prod(filter_shape[:2]) * num_filters
-        # initialize weights with random weights
         w_bound = np.sqrt(6. / (fan_in + fan_out))
 
         w = tf.get_variable("W", filter_shape, dtype, tf.random_uniform_initializer(-w_bound, w_bound),
@@ -50,7 +44,6 @@ class LSTMPolicy(object):
 
         for i in range(4):
             x = tf.nn.elu(conv2d(x, 32, "l{}".format(i + 1), [3, 3], [2, 2]))
-        # introduce a "fake" batch dimension of 1 after flatten so that we can do LSTM over time dim
         x = tf.expand_dims(flatten(x), [0])
 
         size = 256
@@ -80,6 +73,9 @@ class LSTMPolicy(object):
         self.logits = linear(x, ac_space, "action", normalized_columns_initializer(0.01))
         self.vf = tf.reshape(linear(x, 1, "value", normalized_columns_initializer(1.0)), [-1])
         self.state_out = [lstm_c[:1, :], lstm_h[:1, :]]
+        
+        self.log_probs = tf.nn.log_softmax(self.logits)
+
         self.sample = categorical_sample(self.logits, ac_space)[0, :]
         self.var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, tf.get_variable_scope().name)
 
@@ -88,8 +84,8 @@ class LSTMPolicy(object):
 
     def act(self, ob, c, h):
         sess = tf.get_default_session()
-        return sess.run([self.sample, self.vf] + self.state_out,
-                        {self.x: [ob], self.state_in[0]: c, self.state_in[1]: h})
+        return sess.run([self.sample, self.vf, self.log_probs] + self.state_out,
+                    {self.x: [ob], self.state_in[0]: c, self.state_in[1]: h})
 
     def value(self, ob, c, h):
         sess = tf.get_default_session()
